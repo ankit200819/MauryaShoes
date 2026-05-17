@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maurya's Shoe — Step Into Style</title>
+  <meta name="description" content="Discover premium footwear at Maurya's Shoe. Shop the latest Nike, Adidas, Jordan and more. Free shipping above ₹999." />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    /* ===== 3D CANVAS ===== */
+    #shoe-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .scroll-wrapper { position: relative; z-index: 1; }
+
+    /* ===== HERO ===== */
+    .hero-section {
+      height: 100vh;
+      display: flex; align-items: center;
+      pointer-events: none;
+    }
+    .hero-content {
+      pointer-events: all;
+      max-width: 600px;
+      padding-top: 5rem;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 0.75rem;
+      padding: 0.5rem 1.25rem;
+      background: rgba(245,166,35,0.1);
+      border: 1px solid rgba(245,166,35,0.3);
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 2rem;
+      animation: fadeUp 0.8s ease both;
+    }
+    .hero-eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: pulse 2s ease infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.5)} }
+    .hero-title {
+      font-size: clamp(3.5rem,7vw,6.5rem);
+      font-weight: 900;
+      line-height: 1.0;
+      letter-spacing: -0.04em;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.8s 0.1s ease both;
+    }
+    .hero-title .line2 { color: var(--gold); display: block; }
+    .hero-desc {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      max-width: 480px;
+      margin-bottom: 2.5rem;
+      animation: fadeUp 0.8s 0.2s ease both;
+    }
+    .hero-btns {
+      display: flex; gap: 1rem; flex-wrap: wrap;
+      animation: fadeUp 0.8s 0.3s ease both;
+    }
+    .hero-stats {
+      display: flex; gap: 2.5rem;
+      margin-top: 3.5rem;
+      animation: fadeUp 0.8s 0.4s ease both;
+    }
+    .hero-stat-num { font-size: 1.8rem; font-weight: 800; color: var(--white); font-family: var(--font-accent); }
+    .hero-stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.1rem; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:none} }
+
+    /* ===== SCROLL HINT ===== */
+    .scroll-hint {
+      position: absolute;
+      bottom: 2.5rem; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      animation: fadeUp 1s 1s ease both;
+    }
+    .scroll-hint .mouse {
+      width: 24px; height: 38px;
+      border: 2px solid rgba(245,166,35,0.4);
+      border-radius: 12px;
+      display: flex; justify-content: center; padding-top: 6px;
+    }
+    .scroll-hint .wheel { width: 4px; height: 8px; background: var(--gold); border-radius: 2px; animation: scrollDown 1.5s ease infinite; }
+    @keyframes scrollDown { 0%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(10px)} }
+
+    /* ===== FEATURE SECTION ===== */
+    .features-section {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 6rem 0;
+    }
+    .features-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem; align-items: center;
+    }
+    .features-list { display: flex; flex-direction: column; gap: 2rem; }
+    .feature-item {
+      display: flex; gap: 1.5rem; align-items: flex-start;
+      padding: 1.5rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      transition: var(--transition);
+      opacity: 0; transform: translateX(-30px);
+    }
+    .feature-item.visible { opacity: 1; transform: none; }
+    .feature-item:hover { border-color: rgba(245,166,35,0.5); }
+    .feature-icon {
+      width: 52px; height: 52px; flex-shrink: 0;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, rgba(245,166,35,0.2), rgba(245,166,35,0.05));
+      border: 1px solid rgba(245,166,35,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+    }
+    .feature-text h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .feature-text p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+
+    /* ===== CATEGORIES SECTION ===== */
+    .categories-section {
+      min-height: 80vh;
+      display: flex; align-items: center;
+      padding: 6rem 0;
+    }
+    .categories-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.25rem; margin-top: 3rem; }
+    .category-card {
+      position: relative;
+      aspect-ratio: 3/4;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      cursor: pointer;
+      opacity: 0; transform: translateY(40px);
+      transition: opacity 0.5s ease, transform 0.5s ease, box-shadow 0.3s ease;
+    }
+    .category-card.visible { opacity: 1; transform: none; }
+    .category-card:hover { transform: scale(1.03); box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+    .cat-img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+      filter: brightness(0.5);
+    }
+    .category-card:hover .cat-img { transform: scale(1.1); filter: brightness(0.6); }
+    .cat-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(10,14,26,0.95) 0%, transparent 60%);
+      display: flex; flex-direction: column;
+      justify-content: flex-end; padding: 1.5rem;
+    }
+    .cat-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .cat-count { font-size: 0.8rem; color: var(--gold); font-weight: 600; }
+    .cat-arrow {
+      position: absolute; top: 1rem; right: 1rem;
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(245,166,35,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; opacity: 0; transition: var(--transition);
+    }
+    .category-card:hover .cat-arrow { opacity: 1; transform: rotate(45deg); }
+
+    /* ===== FEATURED PRODUCTS ===== */
+    .products-section { padding: 6rem 0; }
+    .products-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.5rem; }
+
+    /* ===== MARQUEE BAND ===== */
+    .marquee-section {
+      padding: 2rem 0;
+      border-top: 1px solid rgba(245,166,35,0.1);
+      border-bottom: 1px solid rgba(245,166,35,0.1);
+      overflow: hidden;
+      background: linear-gradient(90deg, var(--navy), var(--navy-mid), var(--navy));
+    }
+    .marquee-track {
+      display: flex; gap: 3rem;
+      animation: marquee 20s linear infinite;
+      white-space: nowrap;
+    }
+    .marquee-item {
+      display: flex; align-items: center; gap: 1rem;
+      font-size: 1rem; font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .marquee-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+    @keyframes marquee { to { transform: translateX(-50%); } }
+
+    /* ===== TESTIMONIALS ===== */
+    .testimonials-section { padding: 6rem 0; }
+    .testimonials-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
+    .testimonial-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      transition: var(--transition);
+    }
+    .testimonial-card:hover { border-color: rgba(245,166,35,0.4); transform: translateY(-4px); }
+    .t-stars { color: var(--gold); font-size: 1rem; letter-spacing: 2px; margin-bottom: 1rem; }
+    .t-text { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.8; margin-bottom: 1.5rem; font-style: italic; }
+    .t-footer { display: flex; align-items: center; gap: 1rem; }
+    .t-avatar {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; color: var(--navy); font-size: 1rem;
+    }
+    .t-name { font-weight: 600; font-size: 0.9rem; }
+    .t-location { font-size: 0.75rem; color: var(--text-muted); }
+
+    /* ===== CTA SECTION ===== */
+    .cta-section {
+      padding: 6rem 0;
+      text-align: center;
+    }
+    .cta-card {
+      background: linear-gradient(135deg, rgba(245,166,35,0.1), rgba(245,166,35,0.03));
+      border: 1px solid rgba(245,166,35,0.25);
+      border-radius: var(--radius-xl);
+      padding: 5rem 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-card::before {
+      content: ''; position: absolute;
+      top: -100px; left: 50%; transform: translateX(-50%);
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(245,166,35,0.12) 0%, transparent 70%);
+    }
+    .cta-title { font-size: clamp(2rem, 4vw, 3.5rem); margin-bottom: 1rem; position: relative; }
+    .cta-desc { color: var(--text-secondary); font-size: 1.1rem; max-width: 500px; margin: 0 auto 2.5rem; position: relative; }
+    .cta-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; position: relative; }
+
+    @media(max-width:1024px){
+      .categories-grid{grid-template-columns:repeat(2,1fr)}
+      .products-grid{grid-template-columns:repeat(2,1fr)}
+    }
+    @media(max-width:768px){
+      .features-layout{grid-template-columns:1fr}
+      .hero-stats{gap:1.5rem}
+      .testimonials-grid{grid-template-columns:1fr}
+      #shoe-canvas{display:none}
+      .hero-section{height:auto;padding-top:5.5rem;padding-bottom:3rem;flex-direction:column;}
+      .hero-content{padding-top:0;max-width:100%;}
+      .hero-mobile-img{display:flex !important;}
+    }
+    @media(max-width:430px){
+      .hero-section{padding-top:5rem;padding-bottom:2rem;}
+      .hero-title{font-size:clamp(2.4rem,11vw,3.5rem);}
+      .hero-desc{font-size:0.97rem;margin-bottom:1.75rem;}
+      .hero-btns{gap:0.75rem;}
+      .hero-btns .btn{flex:1;text-align:center;justify-content:center;}
+      .hero-stats{gap:1.25rem;margin-top:2.2rem;flex-wrap:wrap;}
+      .hero-stat-num{font-size:1.4rem;}
+      .categories-grid{grid-template-columns:repeat(2,1fr);gap:0.75rem;}
+      .products-grid{grid-template-columns:repeat(2,1fr);gap:0.75rem;}
+      .testimonials-grid{grid-template-columns:1fr;}
+      .cta-card{padding:3rem 1.5rem;}
+      .features-section{padding:3rem 0;min-height:unset;}
+      .categories-section{padding:3rem 0;min-height:unset;}
+      .products-section{padding:3rem 0;}
+      .testimonials-section{padding:3rem 0;}
+      .cta-section{padding:3rem 0;}
+      .cat-name{font-size:1rem;}
+      .features-list{gap:1rem;}
+      .feature-item{padding:1rem;gap:1rem;}
+      .feature-icon{width:42px;height:42px;font-size:1.2rem;}
+    }
+    /* Mobile hero image placeholder */
+    .hero-mobile-img{
+      display:none;
+      width:100%;max-width:320px;
+      margin:1.5rem auto 0;
+      border-radius:var(--radius-xl);
+      overflow:hidden;
+      aspect-ratio:1;
+      background:linear-gradient(135deg,#1C2333,#0A0E1A);
+      align-items:center;justify-content:center;
+      font-size:8rem;
+      border:1px solid rgba(245,166,35,0.2);
+      box-shadow:0 20px 60px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body>
+
+<!-- PAGE LOADER -->
+<div class="page-loader" id="page-loader">
+  <div class="loader-logo">👟 Maurya's</div>
+  <div class="spinner"></div>
+</div>
+
+<!-- 3D CANVAS -->
+<canvas id="shoe-canvas"></canvas>
+
+
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <a href="/" class="nav-logo">
+    <div class="logo-icon">👟</div>
+    Maurya's <span>Shoe</span>
+  </a>
+  <div class="nav-links" id="nav-links">
+    <a href="/" class="nav-link active">Home</a>
+    <a href="/products.html" class="nav-link">Shop</a>
+    <a href="/products.html?category=Running" class="nav-link">Running</a>
+    <a href="/products.html?category=Casual" class="nav-link">Casual</a>
+    <a href="/products.html?category=Basketball" class="nav-link">Basketball</a>
+    <a href="/admin/dashboard.html" class="nav-link" id="nav-admin-link" style="display:none">Admin</a>
+  </div>
+  <div class="nav-actions">
+    <div style="display:flex; align-items:center; position:relative;">
+      <input type="text" id="nav-search-input" placeholder="Search shoes..." class="form-input" style="display:none; position:absolute; top:130%; right:0; width:min(250px, 85vw); border-radius:var(--radius-md); padding:0.6rem 1rem; box-shadow:var(--shadow-card); background-color:var(--navy-light); z-index:100; border:1px solid var(--card-border);" onkeypress="if(event.key==='Enter' && this.value.trim()) location.href='/products.html?search='+encodeURIComponent(this.value.trim())">
+      <button class="nav-icon-btn" title="Search" onclick="const i=document.getElementById('nav-search-input'); if(i.style.display==='none'){i.style.display='block';i.focus();}else if(i.value.trim()){location.href='/products.html?search='+encodeURIComponent(i.value.trim());}else{i.style.display='none';}">🔍</button>
+    </div>
+    <a href="/cart.html" class="nav-icon-btn" title="Cart" style="position:relative;">
+      🛒 <span class="cart-badge" id="cart-badge" style="display:none">0</span>
+    </a>
+    <a href="/login.html" class="btn btn-primary btn-sm" id="nav-login-btn">Sign In</a>
+    <button class="nav-user-btn" id="nav-user-btn" style="display:none">👤 </button>
+  </div>
+  <div class="hamburger" id="hamburger" onclick="openNav()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+<button class="hamburger-close" id="nav-close" onclick="closeNav()" aria-label="Close menu">✕</button>
+
+<!-- SCROLL WRAPPER -->
+<div class="scroll-wrapper">
+
+  <!-- ===== HERO ===== -->
+  <section class="hero-section container" style="flex-direction:column;justify-content:center;">
+    <div class="hero-content">
+      <div class="hero-eyebrow">
+        <span class="dot"></span>
+        New Collection 2024
+      </div>
+      <h1 class="hero-title">
+        Step Into<br>
+        <span class="line2">Pure Style.</span>
+      </h1>
+      <p class="hero-desc">
+        Discover premium footwear crafted for those who move with purpose. 
+        From the track to the street — we've got the perfect pair for you.
+      </p>
+      <div class="hero-btns">
+        <a href="/products.html" class="btn btn-primary btn-lg">Shop Now →</a>
+        <a href="/products.html?featured=1" class="btn btn-secondary btn-lg">Featured</a>
+      </div>
+      <div class="hero-stats">
+        <div>
+          <div class="hero-stat-num">500+</div>
+          <div class="hero-stat-label">Premium Styles</div>
+        </div>
+        <div>
+          <div class="hero-stat-num">50K+</div>
+          <div class="hero-stat-label">Happy Customers</div>
+        </div>
+        <div>
+          <div class="hero-stat-num">4.9★</div>
+          <div class="hero-stat-label">Average Rating</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile shoe placeholder (shown when 3D canvas is hidden) -->
+    <div class="hero-mobile-img">👟</div>
+    
+    <!-- Scroll hint -->
+    <div class="scroll-hint">
+      <div class="mouse"><div class="wheel"></div></div>
+      SCROLL
+    </div>
+  </section>
+
+
+
+  <!-- ===== FEATURES ===== -->
+  <section class="features-section container" id="features-section">
+    <div class="features-layout">
+
+      <div class="features-list" id="features-list">
+        <div class="section-tag">Why Choose Us</div>
+        <h2 class="heading-lg" style="margin-bottom:1.5rem;">Engineered for <span class="text-gold">Champions</span></h2>
+        <div class="feature-item">
+          <div class="feature-icon">🚀</div>
+          <div class="feature-text">
+            <h3>Performance First</h3>
+            <p>Every shoe is designed with advanced cushioning and support technology for peak performance.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🎨</div>
+          <div class="feature-text">
+            <h3>Premium Materials</h3>
+            <p>Crafted from the finest leather, mesh, and eco-friendly materials that last for years.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🛡️</div>
+          <div class="feature-text">
+            <h3>2-Year Warranty</h3>
+            <p>Every pair comes with our signature quality guarantee. Not happy? Full refund, no questions.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🚚</div>
+          <div class="feature-text">
+            <h3>Free Express Shipping</h3>
+            <p>Free delivery above ₹999. Get your shoes in 2–4 business days across India.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== MARQUEE BRANDS ===== -->
+  <div class="marquee-section">
+    <div class="marquee-track" id="marquee-track" onmouseover="this.style.animationPlayState='paused'" onmouseout="this.style.animationPlayState='running'">
+      <a href="/products.html?brand=Nike" class="marquee-item" style="transition: color 0.3s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color=''"><span class="marquee-dot"></span> Nike</a>
+      <a href="/products.html?brand=Adidas" class="marquee-item" style="transition: color 0.3s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color=''"><span class="marquee-dot"></span> Adidas</a>
+      <a href="/products.html?brand=Jordan" class="marquee-item" style="transition: color 0.3s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color=''"><span class="marquee-dot"></span> Jordan</a>
+      <a href="/products.html?brand=Puma" class="marquee-item" style="transition: color 0.3s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color=''"><span class="marquee-dot"></span> Puma</a>
+      <a href="/products.html?brand=New%20Balance" class="marquee-item" style="transition: color 0.3s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color=''"><span class="marquee-dot"></span> New Balance</a>
+      <a href="/products.html?brand=Converse" class="marquee-item" style="transition: color 0.3s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color=''"><span class="marquee-dot"></span> Converse</a>
+      <a href="/products.html?brand=Vans" class="marquee-item" style="transition: color 0.3s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color=''"><span class="marquee-dot"></span> Vans</a>
+      <a href="/products.html?brand=Reebok" class="marquee-item" style="transition: color 0.3s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color=''"><span class="marquee-dot"></span> Reebok</a>
+      <a href="/products.html?brand=Nike" class="marquee-item" style="transition: color 0.3s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color=''"><span class="marquee-dot"></span> Nike</a>
+      <a href="/products.html?brand=Adidas" class="marquee-item" style="transition: color 0.3s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color=''"><span class="marquee-dot"></span> Adidas</a>
+      <a href="/products.html?brand=Jordan" class="marquee-item" style="transition: color 0.3s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color=''"><span class="marquee-dot"></span> Jordan</a>
+      <a href="/products.html?brand=Puma" class="marquee-item" style="transition: color 0.3s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color=''"><span class="marquee-dot"></span> Puma</a>
+      <a href="/products.html?brand=New%20Balance" class="marquee-item" style="transition: color 0.3s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color=''"><span class="marquee-dot"></span> New Balance</a>
+      <a href="/products.html?brand=Converse" class="marquee-item" style="transition: color 0.3s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color=''"><span class="marquee-dot"></span> Converse</a>
+      <a href="/products.html?brand=Vans" class="marquee-item" style="transition: color 0.3s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color=''"><span class="marquee-dot"></span> Vans</a>
+      <a href="/products.html?brand=Reebok" class="marquee-item" style="transition: color 0.3s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color=''"><span class="marquee-dot"></span> Reebok</a>
+    </div>
+  </div>
+
+  <!-- ===== CATEGORIES ===== -->
+  <section class="categories-section container">
+    <div class="section-header">
+      <div class="section-tag">Browse Categories</div>
+      <h2 class="section-title">Find Your <span class="text-gold">Perfect Fit</span></h2>
+      <p class="section-desc">From performance running to street-style casual — every category curated for you.</p>
+    </div>
+    <div class="categories-grid" id="categories-grid">
+      <div class="category-card" onclick="location.href='/products.html?category=Running'" style="transition-delay:0s">
+        <img class="cat-img" src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400" alt="Running" loading="lazy" />
+        <div class="cat-overlay">
+          <div class="cat-name">Running</div>
+          <div class="cat-count">120+ Styles</div>
+        </div>
+        <div class="cat-arrow">↗</div>
+      </div>
+      <div class="category-card" onclick="location.href='/products.html?category=Basketball'" style="transition-delay:0.1s">
+        <img class="cat-img" src="https://images.unsplash.com/photo-1556906781-9a412961d28e?w=400" alt="Basketball" loading="lazy" />
+        <div class="cat-overlay">
+          <div class="cat-name">Basketball</div>
+          <div class="cat-count">80+ Styles</div>
+        </div>
+        <div class="cat-arrow">↗</div>
+      </div>
+      <div class="category-card" onclick="location.href='/products.html?category=Casual'" style="transition-delay:0.2s">
+        <img class="cat-img" src="https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=400" alt="Casual" loading="lazy" />
+        <div class="cat-overlay">
+          <div class="cat-name">Casual</div>
+          <div class="cat-count">200+ Styles</div>
+        </div>
+        <div class="cat-arrow">↗</div>
+      </div>
+      <div class="category-card" onclick="location.href='/products.html?category=Lifestyle'" style="transition-delay:0.3s">
+        <img class="cat-img" src="https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?w=400" alt="Lifestyle" loading="lazy" />
+        <div class="cat-overlay">
+          <div class="cat-name">Lifestyle</div>
+          <div class="cat-count">150+ Styles</div>
+        </div>
+        <div class="cat-arrow">↗</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FEATURED PRODUCTS ===== -->
+  <section class="products-section container">
+    <div class="flex-between" style="margin-bottom:2.5rem;">
+      <div>
+        <div class="section-tag" style="margin-bottom:0.75rem">Trending Now</div>
+        <h2 class="heading-lg">Featured <span class="text-gold">Picks</span></h2>
+      </div>
+      <a href="/products.html" class="btn btn-secondary">View All →</a>
+    </div>
+    <div class="products-grid" id="featured-grid">
+      <!-- Dynamic product cards -->
+      <div class="product-card skeleton" style="height:380px;"></div>
+      <div class="product-card skeleton" style="height:380px;"></div>
+      <div class="product-card skeleton" style="height:380px;"></div>
+      <div class="product-card skeleton" style="height:380px;"></div>
+    </div>
+  </section>
+
+  <!-- ===== TESTIMONIALS ===== -->
+  <section class="testimonials-section container">
+    <div class="section-header">
+      <div class="section-tag">Customer Love</div>
+      <h2 class="section-title">What They're <span class="text-gold">Saying</span></h2>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card">
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">"Ordered the Nike Air Max 270 and it arrived in just 2 days. The quality is incredible — exactly like the pictures. Maurya's Shoe is my go-to now!"</p>
+        <div class="t-footer"><div class="t-avatar">A</div><div><div class="t-name">Arjun Sharma</div><div class="t-location">Mumbai</div></div></div>
+      </div>
+      <div class="testimonial-card">
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">"Bought 3 pairs in the last month alone! The 3D view on the website let me see exactly what I was getting. Super satisfied with the Jordan 1s!"</p>
+        <div class="t-footer"><div class="t-avatar">P</div><div><div class="t-name">Priya Iyer</div><div class="t-location">Bangalore</div></div></div>
+      </div>
+      <div class="testimonial-card">
+        <div class="t-stars">★★★★★</div>
+        <p class="t-text">"The best shoe shopping experience online. Great prices, authentic products and superb customer service. The Adidas UltraBoost are just 🔥"</p>
+        <div class="t-footer"><div class="t-avatar">R</div><div><div class="t-name">Rohan Patel</div><div class="t-location">Delhi</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CTA ===== -->
+  <section class="cta-section container">
+    <div class="cta-card">
+      <h2 class="cta-title">Ready to Level Up <span class="text-gold">Your Sole?</span></h2>
+      <p class="cta-desc">Join 50,000+ happy customers and discover your next favourite pair. New arrivals every week.</p>
+      <div class="cta-btns">
+        <a href="/products.html" class="btn btn-primary btn-lg">Shop Collection →</a>
+        <a href="/register.html" class="btn btn-secondary btn-lg">Create Account</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="/" class="nav-logo" style="margin-bottom:1rem;display:inline-flex">
+            <div class="logo-icon">👟</div> Maurya's <span>Shoe</span>
+          </a>
+          <p>Premium footwear for the modern sole. Curated styles, authentic brands, unbeaten prices.</p>
+          <div class="footer-socials">
+            <a href="#" class="social-btn">f</a>
+            <a href="#" class="social-btn">in</a>
+            <a href="#" class="social-btn">tw</a>
+            <a href="#" class="social-btn">ig</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer-heading">Shop</div>
+          <ul class="footer-links">
+            <li><a href="/products.html?category=Running">Running</a></li>
+            <li><a href="/products.html?category=Basketball">Basketball</a></li>
+            <li><a href="/products.html?category=Casual">Casual</a></li>
+            <li><a href="/products.html?category=Lifestyle">Lifestyle</a></li>
+            <li><a href="/products.html?featured=1">New Arrivals</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer-heading">Account</div>
+          <ul class="footer-links">
+            <li><a href="/login.html">Login</a></li>
+            <li><a href="/register.html">Register</a></li>
+            <li><a href="/profile.html">My Orders</a></li>
+            <li><a href="/cart.html">Cart</a></li>
+          </ul>
+        </div>
+        <div>
+          <div class="footer-heading">Support</div>
+          <ul class="footer-links">
+            <li><a href="#">Size Guide</a></li>
+            <li><a href="#">Returns</a></li>
+            <li><a href="#">Shipping Info</a></li>
+            <li><a href="#">Contact Us</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>© 2024 Maurya's Shoe. Made with ❤️ in India. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- end scroll-wrapper -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/home3d.js"></script>
+<script>
+// Nav open/close helpers
+function openNav(){
+  document.getElementById('nav-links').classList.add('nav-open');
+  document.body.classList.add('nav-open');
+  document.getElementById('nav-close').style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function closeNav(){
+  document.getElementById('nav-links').classList.remove('nav-open');
+  document.body.classList.remove('nav-open');
+  document.getElementById('nav-close').style.display='none';
+  document.body.style.overflow='';
+}
+// Close nav when a link is clicked
+document.querySelectorAll('#nav-links .nav-link').forEach(l=>l.addEventListener('click',closeNav));
+
+// Load featured products and animate shoe
+document.addEventListener('DOMContentLoaded', async () => {
+  // Hide loader
+  setTimeout(() => {
+    const loader = document.getElementById('page-loader');
+    if (loader) loader.classList.add('hidden');
+  }, 1200);
+
+  // Load featured products
+  try {
+    const products = await api.getProducts({ featured: 1, limit: 4 });
+    const grid = document.getElementById('featured-grid');
+    if (grid && products.length) {
+      grid.innerHTML = products.map(p => {
+        const disc = p.original_price ? discountPct(p.price, p.original_price) : 0;
+        return `
+          <div class="product-card" onclick="location.href='/product-detail.html?id=${p.id}'">
+            <div class="product-img-wrap">
+              <img src="${p.images[0]}" alt="${p.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/400x400/1C2333/F5A623?text=👟'"/>
+              ${disc > 0 ? `<span class="product-badge badge-sale">-${disc}%</span>` : '<span class="product-badge badge-hot">HOT</span>'}
+              <button class="product-wishlist">♡</button>
+            </div>
+            <div class="product-info">
+              <div class="product-brand">${p.brand}</div>
+              <div class="product-name">${p.name}</div>
+              <div class="product-rating"><span class="stars">${renderStars(p.rating)}</span><span class="rating-count">(${p.reviews_count})</span></div>
+              <div class="product-price-row">
+                <span class="product-price">${formatPrice(p.price)}</span>
+                ${p.original_price ? `<span class="product-original-price">${formatPrice(p.original_price)}</span>` : ''}
+                ${disc > 0 ? `<span class="product-discount">${disc}% off</span>` : ''}
+              </div>
+              <button class="product-add-btn" onclick="event.stopPropagation();location.href='/product-detail.html?id=${p.id}'">View Details</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+  } catch (e) {
+    console.error('Failed to load products:', e);
+  }
+
+  // Intersection Observer for animations
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15 });
+
+  document.querySelectorAll('.feature-item, .category-card').forEach(el => observer.observe(el));
+});
+</script>
+</body>
+</html>

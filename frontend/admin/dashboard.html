@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Admin Dashboard — Maurya's Shoe</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    body { background: var(--navy-mid); }
+    .admin-layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    .admin-sidebar { background: var(--navy); border-right: 1px solid rgba(245,166,35,0.1); padding: 0; display: flex; flex-direction: column; position: fixed; left: 0; top: 0; bottom: 0; width: 240px; z-index: 100; }
+    .sidebar-logo { padding: 1.5rem; border-bottom: 1px solid rgba(245,166,35,0.1); }
+    .sidebar-logo a { font-family: var(--font-accent); font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; }
+    .admin-badge { font-size: 0.65rem; font-weight: 700; background: rgba(245,166,35,0.15); color: var(--gold); padding: 0.15rem 0.4rem; border-radius: 4px; margin-left: 0.25rem; }
+    .sidebar-nav { padding: 1rem 0; flex: 1; }
+    .nav-section-label { padding: 0.75rem 1.25rem 0.25rem; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); }
+    .sidebar-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1.25rem; font-size: 0.9rem; color: var(--text-secondary); transition: var(--transition); cursor: pointer; border-left: 3px solid transparent; }
+    .sidebar-link:hover,.sidebar-link.active { background: rgba(245,166,35,0.06); color: var(--gold); border-left-color: var(--gold); }
+    .sidebar-link .icon { font-size: 1.1rem; width: 22px; flex-shrink: 0; }
+    .sidebar-bottom { padding: 1rem 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .admin-content { margin-left: 240px; padding: 2rem; min-height: 100vh; }
+    .admin-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
+    .admin-title { font-size: 1.5rem; font-weight: 800; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1.25rem; margin-bottom: 2.5rem; }
+    .stat-card { background: var(--navy); border: 1px solid var(--card-border); border-radius: var(--radius-lg); padding: 1.5rem; transition: var(--transition); }
+    .stat-card:hover { border-color: rgba(245,166,35,0.4); transform: translateY(-2px); }
+    .stat-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+    .stat-val { font-size: 2rem; font-weight: 900; font-family: var(--font-accent); margin-bottom: 0.25rem; }
+    .stat-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
+    .stat-change { font-size: 0.78rem; color: var(--success); margin-top: 0.5rem; }
+    .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .admin-panel { background: var(--navy); border: 1px solid var(--card-border); border-radius: var(--radius-lg); padding: 1.5rem; }
+    .panel-title { font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+    .panel-title a { font-size: 0.8rem; color: var(--gold); font-weight: 500; }
+    .recent-order-row { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .recent-order-row:last-child { border-bottom: none; }
+    .r-ord-id { font-size: 0.85rem; font-weight: 600; }
+    .r-ord-user { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.1rem; }
+    .r-ord-price { font-weight: 700; color: var(--gold); font-size: 0.9rem; }
+    @media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}.admin-grid{grid-template-columns:1fr}}
+    @media(max-width:768px){.admin-sidebar{display:none}.admin-content{margin-left:0}}
+  </style>
+</head>
+<body>
+<div class="admin-layout">
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-logo">
+      <a href="/"><div style="width:32px;height:32px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">👟</div>
+        Maurya's<span class="admin-badge">ADMIN</span>
+      </a>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="/admin/dashboard.html" class="sidebar-link active"><span class="icon">📊</span>Dashboard</a>
+      <div class="nav-section-label">Manage</div>
+      <a href="/admin/products.html" class="sidebar-link"><span class="icon">👟</span>Products</a>
+      <a href="/admin/orders.html" class="sidebar-link"><span class="icon">📦</span>Orders</a>
+      <div class="nav-section-label">Store</div>
+      <a href="/" class="sidebar-link"><span class="icon">🌐</span>View Store</a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-link" onclick="Auth.logout()" style="color:var(--error)"><span class="icon">🚪</span>Sign Out</div>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="admin-content">
+    <div class="admin-topbar">
+      <div>
+        <h1 class="admin-title">Dashboard</h1>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-top:0.2rem">Welcome back, Admin 👋</p>
+      </div>
+      <div style="display:flex;gap:0.75rem">
+        <a href="/admin/products.html" class="btn btn-secondary btn-sm">+ Add Product</a>
+        <a href="/admin/orders.html" class="btn btn-primary btn-sm">View Orders</a>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card skeleton" style="height:140px"></div>
+      <div class="stat-card skeleton" style="height:140px"></div>
+      <div class="stat-card skeleton" style="height:140px"></div>
+      <div class="stat-card skeleton" style="height:140px"></div>
+    </div>
+
+    <!-- PANELS -->
+    <div class="admin-grid">
+      <div class="admin-panel">
+        <div class="panel-title">Recent Orders <a href="/admin/orders.html">View All →</a></div>
+        <div id="recent-orders"><div class="spinner" style="margin:1rem auto"></div></div>
+      </div>
+      <div class="admin-panel">
+        <div class="panel-title">Quick Actions</div>
+        <div style="display:flex;flex-direction:column;gap:0.75rem">
+          <a href="/admin/products.html" class="btn btn-secondary" style="justify-content:flex-start;gap:0.75rem"><span>👟</span>Manage Products</a>
+          <a href="/admin/orders.html" class="btn btn-secondary" style="justify-content:flex-start;gap:0.75rem"><span>📦</span>Manage Orders</a>
+          <a href="/products.html" class="btn btn-ghost" style="justify-content:flex-start;gap:0.75rem"><span>🛍️</span>View Product Catalog</a>
+          <a href="/" class="btn btn-ghost" style="justify-content:flex-start;gap:0.75rem"><span>🌐</span>Visit Store Front</a>
+        </div>
+        <div style="margin-top:1.5rem;padding:1rem;background:rgba(245,166,35,0.05);border:1px solid rgba(245,166,35,0.15);border-radius:var(--radius-md)">
+          <div style="font-size:0.8rem;font-weight:600;color:var(--gold);margin-bottom:0.5rem">🔐 Admin Credentials</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.8">Email: admin@mauryashoe.com<br/>Password: admin123</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../js/api.js"></script><script src="../js/auth.js"></script>
+<script>
+if (!Auth.isLoggedIn() || !Auth.isAdmin()) location.href = '/login.html';
+
+const statusLabels = { pending:'⏳ Pending', processing:'🔄 Processing', shipped:'🚚 Shipped', delivered:'✅ Delivered', cancelled:'❌ Cancelled' };
+
+async function loadStats() {
+  try {
+    const stats = await api.getAdminStats();
+    document.getElementById('stats-grid').innerHTML = `
+      <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-val" style="color:var(--gold)">₹${(stats.revenue/1000).toFixed(1)}K</div><div class="stat-label">Total Revenue</div><div class="stat-change">↑ From all orders</div></div>
+      <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-val">${stats.totalOrders}</div><div class="stat-label">Total Orders</div><div class="stat-change">↑ All time</div></div>
+      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-val">${stats.totalUsers}</div><div class="stat-label">Customers</div><div class="stat-change">↑ Registered users</div></div>
+      <div class="stat-card"><div class="stat-icon">👟</div><div class="stat-val">${stats.totalProducts}</div><div class="stat-label">Products</div><div class="stat-change">↑ In catalog</div></div>
+    `;
+    document.getElementById('recent-orders').innerHTML = stats.recentOrders.length ? stats.recentOrders.map(o => `
+      <div class="recent-order-row">
+        <div>
+          <div class="r-ord-id">Order #${o.id}</div>
+          <div class="r-ord-user">by ${o.user_name} · ${new Date(o.created_at).toLocaleDateString('en-IN')}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="r-ord-price">${formatPrice(o.total)}</div>
+          <div style="margin-top:0.2rem"><span class="status-pill status-${o.status}">${statusLabels[o.status]||o.status}</span></div>
+        </div>
+      </div>`).join('') : '<div class="empty-state"><div class="empty-icon" style="font-size:2rem">📦</div><div>No orders yet</div></div>';
+  } catch(e) { showToast('Failed to load stats: ' + e.message, 'error'); }
+}
+
+document.addEventListener('DOMContentLoaded', loadStats);
+</script>
+</body>
+</html>

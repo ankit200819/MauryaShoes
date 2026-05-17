@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Shopping Cart — Maurya's Shoe</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    .cart-layout { display: grid; grid-template-columns: 1fr 360px; gap: 2.5rem; padding-top: 8rem; padding-bottom: 5rem; align-items: start; }
+    .cart-item { display: grid; grid-template-columns: 100px 1fr auto; gap: 1.25rem; align-items: center; padding: 1.25rem; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-lg); margin-bottom: 1rem; transition: var(--transition); }
+    .cart-item:hover { border-color: rgba(245,166,35,0.3); }
+    .cart-img { width: 100px; height: 100px; border-radius: var(--radius-md); object-fit: cover; background: var(--navy-light); }
+    .cart-item-name { font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem; }
+    .cart-item-meta { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .cart-item-price { font-size: 1.1rem; font-weight: 800; color: var(--gold); }
+    .item-qty { display: flex; align-items: center; gap: 0; background: var(--navy-mid); border: 1px solid var(--card-border); border-radius: var(--radius-md); overflow: hidden; margin-top: 0.75rem; width: fit-content; }
+    .item-qty button { width: 36px; height: 36px; font-size: 1.1rem; border: none; background: none; color: var(--text-secondary); cursor: pointer; transition: var(--transition); }
+    .item-qty button:hover { background: rgba(245,166,35,0.1); color: var(--gold); }
+    .item-qty span { min-width: 36px; text-align: center; font-weight: 700; font-size: 0.9rem; }
+    .item-remove { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; transition: var(--transition); padding: 0.5rem; border-radius: 50%; }
+    .item-remove:hover { color: var(--error); background: rgba(255,77,109,0.1); }
+    .order-summary { background: var(--navy-light); border: 1px solid var(--card-border); border-radius: var(--radius-xl); padding: 2rem; position: sticky; top: 6rem; }
+    .summary-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 1.5rem; }
+    .summary-row { display: flex; justify-content: space-between; margin-bottom: 0.85rem; font-size: 0.95rem; color: var(--text-secondary); }
+    .summary-row.total { border-top: 1px solid rgba(255,255,255,0.06); padding-top: 1rem; margin-top: 0.5rem; color: var(--white); font-weight: 800; font-size: 1.1rem; }
+    .promo-row { display: flex; gap: 0.5rem; margin: 1.5rem 0; }
+    .promo-input { flex: 1; }
+    .free-shipping-bar { background: rgba(0,200,150,0.08); border: 1px solid rgba(0,200,150,0.2); border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1rem; font-size: 0.85rem; color: var(--success); }
+    @media(max-width:900px){ .cart-layout{grid-template-columns:1fr;} }
+    @media(max-width:600px){ .cart-item{grid-template-columns:80px 1fr auto;} .cart-img{width:80px;height:80px;} }
+  </style>
+</head>
+<body>
+<nav class="navbar" id="navbar">
+  <a href="/" class="nav-logo"><div class="logo-icon">👟</div>Maurya's <span>Shoe</span></a>
+  <div class="nav-links">
+    <a href="/" class="nav-link">Home</a><a href="/products.html" class="nav-link">Shop</a>
+    <a href="/admin/dashboard.html" class="nav-link" id="nav-admin-link" style="display:none">Admin</a>
+  </div>
+  <div class="nav-actions">
+    <a href="/cart.html" class="nav-icon-btn active" style="position:relative;color:var(--gold)">🛒<span class="cart-badge" id="cart-badge" style="display:none">0</span></a>
+    <a href="/login.html" class="btn btn-primary btn-sm" id="nav-login-btn">Sign In</a>
+    <button class="nav-user-btn" id="nav-user-btn" style="display:none">👤</button>
+  </div>
+</nav>
+
+<div class="container cart-layout">
+  <!-- CART ITEMS -->
+  <div>
+    <h1 class="heading-lg" style="margin-bottom:2rem">Your Cart <span class="text-gold" id="cart-count-title"></span></h1>
+    <div id="cart-items-list">
+      <div class="flex-center" style="height:200px"><div class="spinner"></div></div>
+    </div>
+  </div>
+
+  <!-- ORDER SUMMARY -->
+  <div>
+    <div class="order-summary">
+      <h2 class="summary-title">Order Summary</h2>
+      <div class="free-shipping-bar" id="shipping-msg">🚚 Loading...</div>
+      <div class="summary-row"><span>Subtotal</span><span id="subtotal">₹0</span></div>
+      <div class="summary-row"><span>Shipping</span><span id="shipping-cost">₹0</span></div>
+      <div class="summary-row"><span>Discount</span><span style="color:var(--success)">−₹0</span></div>
+      <div class="promo-row">
+        <input type="text" class="form-input promo-input" placeholder="Promo code" id="promo-input"/>
+        <button class="btn btn-ghost btn-sm" onclick="applyPromo()">Apply</button>
+      </div>
+      <div class="summary-row total"><span>Total</span><span id="total-price">₹0</span></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:1.25rem;padding:1rem" onclick="goCheckout()" id="checkout-btn">Proceed to Checkout →</button>
+      <a href="/products.html" class="btn btn-ghost" style="width:100%;margin-top:0.75rem;justify-content:center">← Continue Shopping</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script><script src="js/auth.js"></script>
+<script>
+let cartItems = [];
+
+async function loadCart() {
+  if (!Auth.isLoggedIn()) {
+    document.getElementById('cart-items-list').innerHTML = `
+      <div class="empty-state"><div class="empty-icon">🛒</div>
+      <div class="empty-title">Please sign in</div>
+      <div class="empty-desc">Sign in to view your cart</div>
+      <a href="/login.html?redirect=/cart.html" class="btn btn-primary" style="margin-top:1rem">Sign In</a></div>`;
+    return;
+  }
+  try {
+    cartItems = await api.getCart();
+    renderCart();
+  } catch(e) { showToast('Failed to load cart', 'error'); }
+}
+
+function renderCart() {
+  const list = document.getElementById('cart-items-list');
+  if (!cartItems.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-title">Your cart is empty</div><div class="empty-desc">Add some amazing shoes to get started</div><a href="/products.html" class="btn btn-primary" style="margin-top:1rem">Browse Shoes →</a></div>`;
+    document.getElementById('cart-count-title').textContent = '';
+    updateSummary(0, 0);
+    return;
+  }
+
+  const totalItems = cartItems.reduce((s,i) => s + i.quantity, 0);
+  document.getElementById('cart-count-title').textContent = `(${totalItems} items)`;
+
+  list.innerHTML = cartItems.map(item => `
+    <div class="cart-item" id="cart-item-${item.id}">
+      <img class="cart-img" src="${item.images[0]||''}" alt="${item.name}" onclick="location.href='/product-detail.html?id=${item.product_id}'" style="cursor:pointer" onerror="this.src='https://via.placeholder.com/100x100/1C2333/F5A623?text=👟'" />
+      <div>
+        <div class="cart-item-name">${item.name}</div>
+        <div class="cart-item-meta">Size: ${item.size} | Color: ${item.color} | Brand: ${item.brand}</div>
+        <div class="cart-item-price">${formatPrice(item.price * item.quantity)}</div>
+        <div class="item-qty">
+          <button onclick="updateQty(${item.id}, ${item.quantity - 1})">−</button>
+          <span>${item.quantity}</span>
+          <button onclick="updateQty(${item.id}, ${item.quantity + 1})">+</button>
+        </div>
+      </div>
+      <button class="item-remove" onclick="removeItem(${item.id})" title="Remove">✕</button>
+    </div>`).join('');
+
+  const subtotal = cartItems.reduce((s,i) => s + i.price * i.quantity, 0);
+  const shipping = subtotal >= 999 ? 0 : 99;
+  updateSummary(subtotal, shipping);
+}
+
+function updateSummary(subtotal, shipping) {
+  document.getElementById('subtotal').textContent = formatPrice(subtotal);
+  document.getElementById('shipping-cost').textContent = shipping === 0 ? 'FREE' : formatPrice(shipping);
+  document.getElementById('total-price').textContent = formatPrice(subtotal + shipping);
+  const msg = document.getElementById('shipping-msg');
+  if (subtotal === 0) { msg.textContent = '🛒 Add items to get started'; return; }
+  if (shipping === 0) { msg.textContent = '🎉 You have free shipping!'; msg.style.color = 'var(--success)'; }
+  else { const left = 999 - subtotal; msg.textContent = `🚚 Add ${formatPrice(left)} more for free shipping!`; msg.style.color = ''; }
+}
+
+async function updateQty(id, qty) {
+  if (qty <= 0) { removeItem(id); return; }
+  try {
+    await api.updateCart(id, { quantity: qty });
+    cartItems = await api.getCart();
+    renderCart(); updateCartBadge();
+  } catch(e) { showToast('Failed to update', 'error'); }
+}
+
+async function removeItem(id) {
+  const el = document.getElementById(`cart-item-${id}`);
+  if (el) { el.style.opacity = '0.4'; el.style.pointerEvents = 'none'; }
+  try {
+    await api.removeFromCart(id);
+    cartItems = cartItems.filter(i => i.id !== id);
+    renderCart(); updateCartBadge();
+    showToast('Item removed', 'info');
+  } catch(e) { showToast('Failed to remove', 'error'); if(el){el.style.opacity='1';el.style.pointerEvents='';} }
+}
+
+function applyPromo() {
+  const code = document.getElementById('promo-input').value.trim().toUpperCase();
+  if (code === 'MAURYA10') showToast('10% discount applied! 🎉', 'success');
+  else showToast('Invalid promo code', 'error');
+}
+
+function goCheckout() {
+  if (!cartItems.length) { showToast('Your cart is empty', 'warning'); return; }
+  location.href = '/checkout.html';
+}
+
+document.addEventListener('DOMContentLoaded', loadCart);
+</script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Manage Products — Admin</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    body { background: var(--navy-mid); }
+    .admin-layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+    .admin-sidebar { background: var(--navy); border-right: 1px solid rgba(245,166,35,0.1); padding: 0; display: flex; flex-direction: column; position: fixed; left: 0; top: 0; bottom: 0; width: 240px; z-index: 100; }
+    .sidebar-logo { padding: 1.5rem; border-bottom: 1px solid rgba(245,166,35,0.1); }
+    .sidebar-logo a { font-family: var(--font-accent); font-size: 1.2rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; }
+    .admin-badge { font-size: 0.65rem; font-weight: 700; background: rgba(245,166,35,0.15); color: var(--gold); padding: 0.15rem 0.4rem; border-radius: 4px; }
+    .sidebar-nav { padding: 1rem 0; flex: 1; }
+    .nav-section-label { padding: 0.75rem 1.25rem 0.25rem; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-muted); }
+    .sidebar-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1.25rem; font-size: 0.9rem; color: var(--text-secondary); transition: var(--transition); border-left: 3px solid transparent; }
+    .sidebar-link:hover,.sidebar-link.active { background: rgba(245,166,35,0.06); color: var(--gold); border-left-color: var(--gold); }
+    .sidebar-link .icon { font-size: 1.1rem; width: 22px; }
+    .sidebar-bottom { padding: 1rem 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .admin-content { margin-left: 240px; padding: 2rem; }
+    .products-table { width: 100%; border-collapse: collapse; }
+    .products-table th { padding: 0.75rem 1rem; text-align: left; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .products-table td { padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+    .products-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .prod-thumb { width: 50px; height: 50px; border-radius: var(--radius-sm); object-fit: cover; }
+    .prod-name-cell { font-weight: 600; font-size: 0.9rem; }
+    .prod-brand-cell { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; }
+    .featured-toggle { width: 36px; height: 20px; border-radius: 10px; border: none; cursor: pointer; transition: var(--transition); position: relative; }
+    .featured-toggle.on { background: var(--gold); }
+    .featured-toggle.off { background: var(--card-bg); border: 1px solid var(--card-border); }
+    .action-btns { display: flex; gap: 0.4rem; }
+    .table-wrap { background: var(--navy); border: 1px solid var(--card-border); border-radius: var(--radius-lg); overflow: auto; }
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 1rem; display: none; }
+    .modal { background: var(--navy-light); border: 1px solid var(--card-border); border-radius: var(--radius-xl); padding: 2rem; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; position: relative; }
+    .modal-close { position: absolute; top: 1rem; right: 1rem; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: var(--text-secondary); font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+    @media(max-width:768px){.admin-sidebar{display:none}.admin-content{margin-left:0}}
+  </style>
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <div class="sidebar-logo"><a href="/"><div style="width:32px;height:32px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1rem">👟</div>Maurya's<span class="admin-badge">ADMIN</span></a></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="/admin/dashboard.html" class="sidebar-link"><span class="icon">📊</span>Dashboard</a>
+      <div class="nav-section-label">Manage</div>
+      <a href="/admin/products.html" class="sidebar-link active"><span class="icon">👟</span>Products</a>
+      <a href="/admin/orders.html" class="sidebar-link"><span class="icon">📦</span>Orders</a>
+      <div class="nav-section-label">Store</div>
+      <a href="/" class="sidebar-link"><span class="icon">🌐</span>View Store</a>
+    </nav>
+    <div class="sidebar-bottom"><div class="sidebar-link" onclick="Auth.logout()" style="color:var(--error);cursor:pointer"><span class="icon">🚪</span>Sign Out</div></div>
+  </aside>
+
+  <main class="admin-content">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem">
+      <div><h1 style="font-size:1.5rem;font-weight:800">Products</h1><p style="color:var(--text-muted);font-size:0.85rem;margin-top:0.2rem">Manage your shoe catalog</p></div>
+      <button class="btn btn-primary" onclick="openModal()">+ Add Product</button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="products-table">
+        <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Rating</th><th>Featured</th><th>Actions</th></tr></thead>
+        <tbody id="products-tbody"><tr><td colspan="7" style="text-align:center;padding:2rem"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="product-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:1.5rem" id="modal-title">Add Product</h2>
+    <form id="product-form">
+      <input type="hidden" id="edit-id" />
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Name *</label><input type="text" class="form-input" id="p-name" required /></div>
+        <div class="form-group"><label class="form-label">Brand *</label><input type="text" class="form-input" id="p-brand" required /></div>
+      </div>
+      <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="p-desc" rows="2"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Price (₹) *</label><input type="number" class="form-input" id="p-price" required /></div>
+        <div class="form-group"><label class="form-label">Original Price (₹)</label><input type="number" class="form-input" id="p-orig-price" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Category *</label><input type="text" class="form-input" id="p-category" placeholder="Running, Casual..." required /></div>
+        <div class="form-group"><label class="form-label">Stock *</label><input type="number" class="form-input" id="p-stock" required /></div>
+      </div>
+      <div class="form-group"><label class="form-label">Sizes (comma-separated)</label><input type="text" class="form-input" id="p-sizes" placeholder="6, 7, 8, 9, 10" /></div>
+      <div class="form-group"><label class="form-label">Colors (comma-separated)</label><input type="text" class="form-input" id="p-colors" placeholder="Black, White, Red" /></div>
+      <div class="form-group"><label class="form-label">Image URLs (one per line)</label><textarea class="form-input" id="p-images" rows="2" placeholder="https://..."></textarea></div>
+      <div class="form-group" style="display:flex;align-items:center;gap:0.75rem">
+        <input type="checkbox" id="p-featured" style="width:18px;height:18px;accent-color:var(--gold)" />
+        <label for="p-featured" class="form-label" style="margin:0">Mark as Featured</label>
+      </div>
+      <div style="display:flex;gap:0.75rem;margin-top:1rem">
+        <button type="submit" class="btn btn-primary" id="modal-submit">Save Product</button>
+        <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../js/api.js"></script><script src="../js/auth.js"></script>
+<script>
+if (!Auth.isLoggedIn() || !Auth.isAdmin()) location.href = '/login.html';
+
+let products = [];
+
+async function loadProducts() {
+  try {
+    products = await api.getAdminProducts();
+    renderTable();
+  } catch(e) { showToast('Failed to load: ' + e.message, 'error'); }
+}
+
+function renderTable() {
+  document.getElementById('products-tbody').innerHTML = products.length ? products.map(p => `
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:0.75rem">
+          <img class="prod-thumb" src="${p.images[0]||''}" alt="${p.name}" onerror="this.src='https://via.placeholder.com/50x50/1C2333/F5A623?text=👟'" />
+          <div><div class="prod-name-cell">${p.name}</div><div class="prod-brand-cell">${p.brand}</div></div>
+        </div>
+      </td>
+      <td><span class="tag">${p.category}</span></td>
+      <td><strong style="color:var(--gold)">${formatPrice(p.price)}</strong>${p.original_price?`<br><span style="font-size:0.75rem;color:var(--text-muted);text-decoration:line-through">${formatPrice(p.original_price)}</span>`:''}</td>
+      <td><span style="color:${p.stock<10?'var(--warning)':'var(--text-primary)'};font-weight:600">${p.stock}</span></td>
+      <td><span style="color:var(--gold)">⭐</span> ${p.rating} <span style="color:var(--text-muted);font-size:0.78rem">(${p.reviews_count})</span></td>
+      <td><span style="color:${p.featured?'var(--gold)':'var(--text-muted)'};font-weight:700">${p.featured?'★ Yes':'—'}</span></td>
+      <td>
+        <div class="action-btns">
+          <button class="btn btn-ghost btn-sm" onclick="editProduct(${p.id})">✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProduct(${p.id},'${p.name.replace(/'/g,"\\'")}')">🗑️</button>
+        </div>
+      </td>
+    </tr>`).join('') : '<tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text-muted)">No products found</td></tr>';
+}
+
+function openModal(product = null) {
+  document.getElementById('product-modal').style.display = 'flex';
+  document.getElementById('modal-title').textContent = product ? 'Edit Product' : 'Add Product';
+  document.getElementById('modal-submit').textContent = product ? 'Update Product' : 'Add Product';
+  if (product) {
+    document.getElementById('edit-id').value = product.id;
+    document.getElementById('p-name').value = product.name;
+    document.getElementById('p-brand').value = product.brand;
+    document.getElementById('p-desc').value = product.description || '';
+    document.getElementById('p-price').value = product.price;
+    document.getElementById('p-orig-price').value = product.original_price || '';
+    document.getElementById('p-category').value = product.category;
+    document.getElementById('p-stock').value = product.stock;
+    document.getElementById('p-sizes').value = (product.sizes || []).join(', ');
+    document.getElementById('p-colors').value = (product.colors || []).join(', ');
+    document.getElementById('p-images').value = (product.images || []).join('\n');
+    document.getElementById('p-featured').checked = !!product.featured;
+  } else {
+    document.getElementById('product-form').reset();
+    document.getElementById('edit-id').value = '';
+  }
+}
+
+function closeModal() { document.getElementById('product-modal').style.display = 'none'; }
+
+function editProduct(id) { const p = products.find(x => x.id === id); if(p) openModal(p); }
+
+async function deleteProduct(id, name) {
+  if (!confirm(`Delete "${name}"?`)) return;
+  try { await api.deleteProduct(id); showToast('Product deleted', 'success'); loadProducts(); }
+  catch(e) { showToast(e.message, 'error'); }
+}
+
+document.getElementById('product-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('edit-id').value;
+  const data = {
+    name: document.getElementById('p-name').value,
+    brand: document.getElementById('p-brand').value,
+    description: document.getElementById('p-desc').value,
+    price: Number(document.getElementById('p-price').value),
+    original_price: Number(document.getElementById('p-orig-price').value) || null,
+    category: document.getElementById('p-category').value,
+    stock: Number(document.getElementById('p-stock').value),
+    sizes: document.getElementById('p-sizes').value.split(',').map(s => s.trim()).filter(Boolean),
+    colors: document.getElementById('p-colors').value.split(',').map(c => c.trim()).filter(Boolean),
+    images: document.getElementById('p-images').value.split('\n').map(u => u.trim()).filter(Boolean),
+    featured: document.getElementById('p-featured').checked
+  };
+  try {
+    if (id) { await api.updateProduct(id, data); showToast('Product updated ✅', 'success'); }
+    else { await api.createProduct(data); showToast('Product added ✅', 'success'); }
+    closeModal(); loadProducts();
+  } catch(err) { showToast(err.message, 'error'); }
+});
+
+document.getElementById('product-modal').addEventListener('click', function(e) { if(e.target === this) closeModal(); });
+document.addEventListener('DOMContentLoaded', loadProducts);
+</script>
+</body>
+</html>

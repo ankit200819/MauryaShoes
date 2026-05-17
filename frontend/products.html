@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Shop All Shoes — Maurya's Shoe</title>
+  <meta name="description" content="Browse our full collection of premium shoes. Filter by brand, category, price and size." />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    .shop-layout { display: grid; grid-template-columns: 260px 1fr; gap: 2rem; padding-top: 7rem; padding-bottom: 4rem; }
+    .filters-sidebar { position: sticky; top: 6rem; height: fit-content; }
+    .filter-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 1rem; }
+    .filter-title { font-size: 0.85rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; }
+    .filter-option { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem; cursor: pointer; }
+    .filter-option input { accent-color: var(--gold); width: 16px; height: 16px; }
+    .filter-option label { font-size: 0.9rem; color: var(--text-secondary); cursor: pointer; transition: var(--transition); }
+    .filter-option:hover label { color: var(--gold); }
+    .filter-range { display: flex; gap: 0.5rem; align-items: center; }
+    .filter-range input { flex: 1; padding: 0.5rem 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.85rem; }
+    .shop-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+    .result-count { font-size: 0.9rem; color: var(--text-secondary); }
+    .sort-select { padding: 0.6rem 1rem; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius-md); color: var(--text-primary); font-size: 0.9rem; cursor: pointer; }
+    .products-grid-main { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
+    .active-filters { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .active-tag { display: flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.75rem; background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.3); border-radius: var(--radius-full); font-size: 0.78rem; color: var(--gold); }
+    .active-tag button { background:none; border:none; color:var(--gold); cursor:pointer; font-size:0.9rem; padding:0; line-height:1; }
+    .search-bar { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .search-bar input { flex:1; }
+    @media(max-width:900px){ .shop-layout{grid-template-columns:1fr;} .filters-sidebar{display:none;} .products-grid-main{grid-template-columns:repeat(2,1fr);} }
+    @media(max-width:500px){ .products-grid-main{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+<nav class="navbar" id="navbar">
+  <a href="/" class="nav-logo"><div class="logo-icon">👟</div>Maurya's <span>Shoe</span></a>
+  <div class="nav-links" id="nav-links">
+    <a href="/" class="nav-link">Home</a>
+    <a href="/products.html" class="nav-link active">Shop</a>
+    <a href="/admin/dashboard.html" class="nav-link" id="nav-admin-link" style="display:none">Admin</a>
+  </div>
+  <div class="nav-actions">
+    <div style="display:flex; align-items:center; position:relative;">
+      <input type="text" id="nav-search-input" placeholder="Search shoes..." class="form-input" style="display:none; position:absolute; top:130%; right:0; width:min(250px, 85vw); border-radius:var(--radius-md); padding:0.6rem 1rem; box-shadow:var(--shadow-card); background-color:var(--navy-light); z-index:100; border:1px solid var(--card-border);" onkeypress="if(event.key==='Enter' && this.value.trim()) location.href='/products.html?search='+encodeURIComponent(this.value.trim())">
+      <button class="nav-icon-btn" title="Search" onclick="const i=document.getElementById('nav-search-input'); if(i.style.display==='none'){i.style.display='block';i.focus();}else if(i.value.trim()){location.href='/products.html?search='+encodeURIComponent(i.value.trim());}else{i.style.display='none';}">🔍</button>
+    </div>
+    <a href="/cart.html" class="nav-icon-btn" style="position:relative;">🛒<span class="cart-badge" id="cart-badge" style="display:none">0</span></a>
+    <a href="/login.html" class="btn btn-primary btn-sm" id="nav-login-btn">Sign In</a>
+    <button class="nav-user-btn" id="nav-user-btn" style="display:none">👤</button>
+  </div>
+</nav>
+
+<div class="container shop-layout">
+  <!-- SIDEBAR FILTERS -->
+  <aside class="filters-sidebar">
+    <div class="search-bar">
+      <input type="text" class="form-input" id="search-input" placeholder="🔍 Search shoes..." />
+    </div>
+    <div class="filter-card">
+      <div class="filter-title">Category</div>
+      <div id="category-filters"></div>
+    </div>
+    <div class="filter-card">
+      <div class="filter-title">Brand</div>
+      <div id="brand-filters"></div>
+    </div>
+    <div class="filter-card">
+      <div class="filter-title">Price Range</div>
+      <div class="filter-range">
+        <input type="number" id="min-price" placeholder="Min ₹" min="0" />
+        <span style="color:var(--text-muted)">—</span>
+        <input type="number" id="max-price" placeholder="Max ₹" />
+      </div>
+      <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:0.75rem" onclick="applyFilters()">Apply</button>
+    </div>
+    <button class="btn btn-ghost btn-sm" style="width:100%" onclick="clearFilters()">Clear All Filters</button>
+  </aside>
+
+  <!-- PRODUCTS AREA -->
+  <main>
+    <div class="shop-header">
+      <div>
+        <h1 class="heading-md" style="margin-bottom:0.25rem">All <span class="text-gold">Shoes</span></h1>
+        <span class="result-count" id="result-count">Loading...</span>
+      </div>
+      <div style="display:flex;gap:1rem;align-items:center">
+        <select class="sort-select" id="sort-select" onchange="applyFilters()">
+          <option value="">Default</option>
+          <option value="price_asc">Price: Low → High</option>
+          <option value="price_desc">Price: High → Low</option>
+          <option value="rating">Top Rated</option>
+          <option value="popular">Most Popular</option>
+          <option value="newest">Newest</option>
+        </select>
+      </div>
+    </div>
+    <div class="active-filters" id="active-filters"></div>
+    <div class="products-grid-main" id="products-grid">
+      <div class="skeleton" style="height:360px;border-radius:16px"></div>
+      <div class="skeleton" style="height:360px;border-radius:16px"></div>
+      <div class="skeleton" style="height:360px;border-radius:16px"></div>
+      <div class="skeleton" style="height:360px;border-radius:16px"></div>
+      <div class="skeleton" style="height:360px;border-radius:16px"></div>
+      <div class="skeleton" style="height:360px;border-radius:16px"></div>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </main>
+</div>
+
+<script src="js/api.js"></script><script src="js/auth.js"></script>
+<script>
+let currentFilters = {};
+let searchTimer;
+
+// Read URL params
+const urlP = new URLSearchParams(location.search);
+if (urlP.get('category')) currentFilters.category = urlP.get('category');
+if (urlP.get('brand')) currentFilters.brand = urlP.get('brand');
+if (urlP.get('featured')) currentFilters.featured = '1';
+if (urlP.get('search')) {
+  currentFilters.search = urlP.get('search');
+  document.getElementById('search-input').value = currentFilters.search;
+}
+
+async function loadFilters() {
+  try {
+    const { categories, brands } = await api.getFilters();
+    document.getElementById('category-filters').innerHTML = categories.map(c => `
+      <div class="filter-option"><input type="checkbox" id="cat-${c}" value="${c}" onchange="onFilterChange('category',this)" ${currentFilters.category===c?'checked':''}/>
+      <label for="cat-${c}">${c}</label></div>`).join('');
+    document.getElementById('brand-filters').innerHTML = brands.map(b => `
+      <div class="filter-option"><input type="checkbox" id="br-${b}" value="${b}" onchange="onFilterChange('brand',this)" ${currentFilters.brand===b?'checked':''}/>
+      <label for="br-${b}">${b}</label></div>`).join('');
+  } catch(e) {}
+}
+
+function onFilterChange(type, el) {
+  document.querySelectorAll(`#${type === 'category' ? 'category' : 'brand'}-filters input`).forEach(i => { if(i !== el) i.checked = false; });
+  if (el.checked) currentFilters[type] = el.value;
+  else delete currentFilters[type];
+  applyFilters();
+}
+
+async function applyFilters() {
+  currentFilters.sort = document.getElementById('sort-select').value || undefined;
+  const min = document.getElementById('min-price').value;
+  const max = document.getElementById('max-price').value;
+  if (min) currentFilters.min_price = min;
+  if (max) currentFilters.max_price = max;
+  
+  renderActiveTags();
+  const grid = document.getElementById('products-grid');
+  grid.innerHTML = '<div class="flex-center" style="grid-column:1/-1;height:200px"><div class="spinner"></div></div>';
+  
+  try {
+    const params = Object.fromEntries(Object.entries(currentFilters).filter(([,v]) => v));
+    const products = await api.getProducts(params);
+    document.getElementById('result-count').textContent = `${products.length} results`;
+    if (!products.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">👟</div><div class="empty-title">No shoes found</div><div class="empty-desc">Try adjusting your filters</div><button class="btn btn-primary" onclick="clearFilters()">Clear Filters</button></div>`;
+      return;
+    }
+    grid.innerHTML = products.map(p => productCard(p)).join('');
+  } catch(e) { grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-title">Failed to load</div></div>'; }
+}
+
+function renderActiveTags() {
+  const tags = [];
+  if (currentFilters.category) tags.push({ label: `Category: ${currentFilters.category}`, key: 'category' });
+  if (currentFilters.brand) tags.push({ label: `Brand: ${currentFilters.brand}`, key: 'brand' });
+  if (currentFilters.min_price) tags.push({ label: `Min: ₹${currentFilters.min_price}`, key: 'min_price' });
+  if (currentFilters.max_price) tags.push({ label: `Max: ₹${currentFilters.max_price}`, key: 'max_price' });
+  document.getElementById('active-filters').innerHTML = tags.map(t => `<span class="active-tag">${t.label}<button onclick="removeFilter('${t.key}')">×</button></span>`).join('');
+}
+
+function removeFilter(key) {
+  delete currentFilters[key];
+  if (key === 'category') document.querySelectorAll('#category-filters input').forEach(i => i.checked = false);
+  if (key === 'brand') document.querySelectorAll('#brand-filters input').forEach(i => i.checked = false);
+  if (key === 'min_price') document.getElementById('min-price').value = '';
+  if (key === 'max_price') document.getElementById('max-price').value = '';
+  applyFilters();
+}
+
+function clearFilters() {
+  currentFilters = {};
+  document.querySelectorAll('.filter-option input').forEach(i => i.checked = false);
+  document.getElementById('min-price').value = '';
+  document.getElementById('max-price').value = '';
+  document.getElementById('sort-select').value = '';
+  applyFilters();
+}
+
+function productCard(p) {
+  const disc = p.original_price ? discountPct(p.price, p.original_price) : 0;
+  return `<div class="product-card" onclick="location.href='/product-detail.html?id=${p.id}'">
+    <div class="product-img-wrap">
+      <img src="${p.images[0]}" alt="${p.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/400x400/1C2333/F5A623?text=👟'" />
+      ${disc>0?`<span class="product-badge badge-sale">-${disc}%</span>`:p.featured?'<span class="product-badge badge-hot">⭐ HOT</span>':''}
+      <button class="product-wishlist">♡</button>
+    </div>
+    <div class="product-info">
+      <div class="product-brand">${p.brand}</div>
+      <div class="product-name">${p.name}</div>
+      <div class="product-rating"><span class="stars">${renderStars(p.rating)}</span><span class="rating-count">(${p.reviews_count})</span></div>
+      <div class="product-price-row">
+        <span class="product-price">${formatPrice(p.price)}</span>
+        ${p.original_price?`<span class="product-original-price">${formatPrice(p.original_price)}</span>`:''}
+        ${disc>0?`<span class="product-discount">${disc}% off</span>`:''}
+      </div>
+      <button class="product-add-btn">View Details</button>
+    </div>
+  </div>`;
+}
+
+document.getElementById('search-input').addEventListener('input', function() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { currentFilters.search = this.value || undefined; applyFilters(); }, 400);
+});
+
+document.addEventListener('DOMContentLoaded', () => { loadFilters(); applyFilters(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Checkout — Maurya's Shoe</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    .checkout-layout { display: grid; grid-template-columns: 1fr 380px; gap: 2.5rem; padding-top: 8rem; padding-bottom: 5rem; align-items: start; }
+    .checkout-section { background: var(--navy-light); border: 1px solid var(--card-border); border-radius: var(--radius-xl); padding: 2rem; margin-bottom: 1.5rem; }
+    .checkout-section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
+    .checkout-section-title .step-num { width: 28px; height: 28px; border-radius: 50%; background: var(--gold); color: var(--navy); font-size: 0.8rem; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+    .payment-methods { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.75rem; margin-bottom: 1.25rem; }
+    .pay-method { padding: 1rem; border: 1.5px solid var(--card-border); border-radius: var(--radius-md); cursor: pointer; text-align: center; transition: var(--transition); }
+    .pay-method:hover,.pay-method.selected { border-color: var(--gold); background: rgba(245,166,35,0.06); }
+    .pay-method .icon { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .pay-method .label { font-size: 0.75rem; color: var(--text-secondary); }
+    .card-fields { display: none; }
+    .card-fields.visible { display: block; }
+    .card-number-row { position: relative; }
+    .card-icon { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); font-size: 1.2rem; }
+    .order-summary-mini { background: var(--navy-light); border: 1px solid var(--card-border); border-radius: var(--radius-xl); padding: 2rem; position: sticky; top: 6rem; }
+    .mini-item { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .mini-img { width: 56px; height: 56px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0; }
+    .mini-name { font-size: 0.85rem; font-weight: 600; line-height: 1.3; }
+    .mini-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem; }
+    .mini-price { font-weight: 700; color: var(--gold); font-size: 0.9rem; margin-left: auto; flex-shrink: 0; }
+    .summary-row { display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 0.9rem; color: var(--text-secondary); }
+    .summary-row.total { font-size: 1.1rem; font-weight: 800; color: var(--white); border-top: 1px solid rgba(255,255,255,0.06); padding-top: 1rem; margin-top: 0.5rem; }
+    .success-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 3000; display: flex; align-items: center; justify-content: center; display: none; }
+    .success-card { background: var(--navy-light); border: 1px solid rgba(0,200,150,0.3); border-radius: var(--radius-xl); padding: 3rem; text-align: center; max-width: 440px; width: 90%; }
+    .success-icon { font-size: 4rem; margin-bottom: 1rem; animation: pop 0.5s ease; }
+    @keyframes pop { 0%{transform:scale(0)} 80%{transform:scale(1.1)} 100%{transform:scale(1)} }
+    @media(max-width:900px){ .checkout-layout{grid-template-columns:1fr;} .payment-methods{grid-template-columns:repeat(3,1fr);} }
+  </style>
+</head>
+<body>
+<nav class="navbar" id="navbar">
+  <a href="/" class="nav-logo"><div class="logo-icon">👟</div>Maurya's <span>Shoe</span></a>
+  <div class="nav-actions">
+    <a href="/cart.html" class="nav-icon-btn" style="position:relative;">🛒<span class="cart-badge" id="cart-badge" style="display:none">0</span></a>
+    <button class="nav-user-btn" id="nav-user-btn" style="display:none">👤</button>
+  </div>
+</nav>
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="success-overlay">
+  <div class="success-card">
+    <div class="success-icon">🎉</div>
+    <h2 style="font-size:1.8rem;margin-bottom:0.5rem">Order Placed!</h2>
+    <p style="color:var(--text-secondary);margin-bottom:0.5rem">Your order has been placed successfully.</p>
+    <p class="text-gold" style="font-weight:700;font-size:1.1rem;margin-bottom:2rem" id="order-id-display"></p>
+    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:2rem">We'll send you a confirmation email. Delivery in 2-4 business days.</p>
+    <div style="display:flex;gap:1rem;justify-content:center">
+      <a href="/profile.html" class="btn btn-primary">Track Order →</a>
+      <a href="/products.html" class="btn btn-ghost">Continue Shopping</a>
+    </div>
+  </div>
+</div>
+
+<div class="container checkout-layout">
+  <!-- LEFT: FORM -->
+  <div>
+    <!-- SHIPPING ADDRESS -->
+    <div class="checkout-section">
+      <h2 class="checkout-section-title"><span class="step-num">1</span>Shipping Address</h2>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">First Name</label><input type="text" class="form-input" id="fname" placeholder="Rahul" required /></div>
+        <div class="form-group"><label class="form-label">Last Name</label><input type="text" class="form-input" id="lname" placeholder="Sharma" required /></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="email" placeholder="rahul@example.com" required /></div>
+      <div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-input" id="phone" placeholder="+91 98765 43210" required /></div>
+      <div class="form-group"><label class="form-label">Address Line</label><input type="text" class="form-input" id="address" placeholder="123 MG Road, Flat 4B" required /></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">City</label><input type="text" class="form-input" id="city" placeholder="Mumbai" required /></div>
+        <div class="form-group"><label class="form-label">State</label><input type="text" class="form-input" id="state" placeholder="Maharashtra" required /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Pincode</label><input type="text" class="form-input" id="pincode" placeholder="400001" required /></div>
+        <div class="form-group"><label class="form-label">Country</label><input type="text" class="form-input" id="country" value="India" /></div>
+      </div>
+    </div>
+
+    <!-- PAYMENT -->
+    <div class="checkout-section">
+      <h2 class="checkout-section-title"><span class="step-num">2</span>Payment Method</h2>
+      <div class="payment-methods">
+        <div class="pay-method selected" id="pay-card" onclick="selectPayment('card')"><div class="icon">💳</div><div class="label">Credit/Debit Card</div></div>
+        <div class="pay-method" id="pay-upi" onclick="selectPayment('upi')"><div class="icon">📱</div><div class="label">UPI</div></div>
+        <div class="pay-method" id="pay-cod" onclick="selectPayment('cod')"><div class="icon">💵</div><div class="label">Cash on Delivery</div></div>
+      </div>
+
+      <!-- Card fields -->
+      <div class="card-fields visible" id="card-fields">
+        <div class="form-group card-number-row">
+          <label class="form-label">Card Number</label>
+          <input type="text" class="form-input" id="card-number" placeholder="4242 4242 4242 4242" maxlength="19" />
+          <span class="card-icon">💳</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Expiry Date</label><input type="text" class="form-input" id="card-expiry" placeholder="MM/YY" maxlength="5" /></div>
+          <div class="form-group"><label class="form-label">CVV</label><input type="text" class="form-input" id="card-cvv" placeholder="123" maxlength="3" /></div>
+        </div>
+        <div class="form-group"><label class="form-label">Name on Card</label><input type="text" class="form-input" id="card-name" placeholder="Rahul Sharma" /></div>
+      </div>
+
+      <!-- UPI fields -->
+      <div class="card-fields" id="upi-fields">
+        <div class="form-group"><label class="form-label">UPI ID</label><input type="text" class="form-input" id="upi-id" placeholder="rahul@paytm" /></div>
+      </div>
+
+      <!-- COD note -->
+      <div class="card-fields" id="cod-fields">
+        <div style="background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.2);border-radius:var(--radius-md);padding:1rem;font-size:0.9rem;color:var(--text-secondary)">
+          💵 You'll pay <strong style="color:var(--white)">₹<span id="cod-total">—</span></strong> in cash when your order arrives. Additional ₹25 COD charge applies.
+        </div>
+      </div>
+    </div>
+
+    <!-- PLACE ORDER -->
+    <button class="btn btn-primary btn-lg" style="width:100%;" id="place-order-btn" onclick="placeOrder()">
+      🔒 Place Order Securely
+    </button>
+    <p style="text-align:center;font-size:0.78rem;color:var(--text-muted);margin-top:0.75rem">🔐 256-bit SSL encryption · Your data is safe</p>
+  </div>
+
+  <!-- RIGHT: ORDER SUMMARY -->
+  <div>
+    <div class="order-summary-mini">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem">Order Summary</h3>
+      <div id="mini-items"><div class="spinner" style="margin:1rem auto"></div></div>
+      <div style="margin-top:1rem">
+        <div class="summary-row"><span>Subtotal</span><span id="ck-subtotal">—</span></div>
+        <div class="summary-row"><span>Shipping</span><span id="ck-shipping">—</span></div>
+        <div class="summary-row total"><span>Total</span><span id="ck-total">—</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script><script src="js/auth.js"></script>
+<script>
+let cartItems = [];
+let selectedPayment = 'card';
+
+if (!Auth.isLoggedIn()) location.href = '/login.html?redirect=/checkout.html';
+
+async function init() {
+  // Pre-fill user info
+  const user = Auth.getUser();
+  if (user) { document.getElementById('email').value = user.email || ''; }
+  
+  // Card formatting
+  document.getElementById('card-number').addEventListener('input', function(){
+    let v = this.value.replace(/\D/g,'').substring(0,16);
+    this.value = v.replace(/(.{4})/g,'$1 ').trim();
+  });
+  document.getElementById('card-expiry').addEventListener('input', function(){
+    let v = this.value.replace(/\D/g,'');
+    if(v.length>=2) v = v.substring(0,2)+'/'+v.substring(2,4);
+    this.value = v;
+  });
+
+  try {
+    cartItems = await api.getCart();
+    if (!cartItems.length) { location.href = '/cart.html'; return; }
+    renderSummary();
+  } catch(e) { showToast('Failed to load cart', 'error'); }
+}
+
+function renderSummary() {
+  document.getElementById('mini-items').innerHTML = cartItems.map(i => `
+    <div class="mini-item">
+      <img class="mini-img" src="${i.images[0]||''}" alt="${i.name}" onerror="this.src='https://via.placeholder.com/56x56/1C2333/F5A623?text=👟'" />
+      <div style="flex:1;min-width:0">
+        <div class="mini-name">${i.name}</div>
+        <div class="mini-meta">Sz:${i.size} · ${i.color} · Qty:${i.quantity}</div>
+      </div>
+      <span class="mini-price">${formatPrice(i.price * i.quantity)}</span>
+    </div>`).join('');
+  const sub = cartItems.reduce((s,i) => s+i.price*i.quantity, 0);
+  const ship = sub >= 999 ? 0 : 99;
+  document.getElementById('ck-subtotal').textContent = formatPrice(sub);
+  document.getElementById('ck-shipping').textContent = ship === 0 ? 'FREE' : formatPrice(ship);
+  document.getElementById('ck-total').textContent = formatPrice(sub + ship);
+  document.getElementById('cod-total').textContent = (sub + ship + 25).toLocaleString('en-IN');
+}
+
+function selectPayment(method) {
+  selectedPayment = method;
+  document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));
+  document.getElementById('pay-' + method).classList.add('selected');
+  document.querySelectorAll('.card-fields').forEach(f => f.classList.remove('visible'));
+  const map = { card: 'card-fields', upi: 'upi-fields', cod: 'cod-fields' };
+  document.getElementById(map[method]).classList.add('visible');
+}
+
+async function placeOrder() {
+  const fname = document.getElementById('fname').value.trim();
+  const lname = document.getElementById('lname').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const address = document.getElementById('address').value.trim();
+  const city = document.getElementById('city').value.trim();
+  const state = document.getElementById('state').value.trim();
+  const pincode = document.getElementById('pincode').value.trim();
+
+  if (!fname||!lname||!email||!phone||!address||!city||!state||!pincode) {
+    showToast('Please fill all address fields', 'warning'); return;
+  }
+
+  if (selectedPayment === 'upi') {
+    const upiId = document.getElementById('upi-id').value.trim();
+    const upiRegex = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]+$/;
+    if (!upiId) {
+      showToast('Please enter your UPI ID', 'warning'); return;
+    }
+    if (!upiRegex.test(upiId)) {
+      showToast('incorrect upi id', 'error'); return;
+    }
+  }
+
+  const btn = document.getElementById('place-order-btn');
+  btn.disabled = true; btn.textContent = '⏳ Processing...';
+
+  try {
+    const items = cartItems.map(i => ({ product_id: i.product_id, name: i.name, price: i.price, quantity: i.quantity, size: i.size, color: i.color, image: i.images[0] || '' }));
+    const order = await api.createOrder({
+      items,
+      shipping_address: { name: fname+' '+lname, email, phone, address, city, state, pincode, country: 'India' },
+      payment_method: selectedPayment
+    });
+    document.getElementById('order-id-display').textContent = `Order #${order.id}`;
+    document.getElementById('success-overlay').style.display = 'flex';
+    updateCartBadge();
+  } catch(e) {
+    showToast(e.message || 'Order failed', 'error');
+    btn.disabled = false; btn.textContent = '🔒 Place Order Securely';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

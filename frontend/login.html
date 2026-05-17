@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Login — Maurya's Shoe</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    body { background: radial-gradient(ellipse at 60% 0%, rgba(245,166,35,0.08) 0%, var(--navy) 60%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .auth-card { background: var(--navy-light); border: 1px solid var(--card-border); border-radius: var(--radius-xl); padding: 3rem 2.5rem; width: 100%; max-width: 440px; }
+    .auth-logo { text-align: center; margin-bottom: 2rem; }
+    .auth-logo a { font-family: var(--font-accent); font-size: 1.6rem; font-weight: 800; display: inline-flex; align-items: center; gap: 0.5rem; }
+    .auth-logo span { color: var(--gold); }
+    .auth-title { text-align: center; margin-bottom: 0.5rem; font-size: 1.7rem; }
+    .auth-subtitle { text-align: center; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 2rem; }
+    .divider { display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0; color: var(--text-muted); font-size: 0.85rem; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.07); }
+    .auth-link { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-secondary); }
+    .auth-link a { color: var(--gold); font-weight: 600; }
+    .error-msg { background: rgba(255,77,109,0.1); border: 1px solid rgba(255,77,109,0.3); border-radius: var(--radius-md); padding: 0.75rem 1rem; color: var(--error); font-size: 0.85rem; margin-bottom: 1rem; display: none; }
+    .demo-accounts { background: rgba(245,166,35,0.05); border: 1px solid rgba(245,166,35,0.15); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; font-size: 0.82rem; color: var(--text-secondary); }
+    .demo-accounts strong { color: var(--gold); display: block; margin-bottom: 0.5rem; }
+    .demo-row { display: flex; justify-content: space-between; margin-top: 0.25rem; }
+    .demo-fill-btn { background: none; border: none; color: var(--gold); font-size: 0.78rem; cursor: pointer; text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="auth-card">
+  <div class="auth-logo">
+    <a href="/"><div style="width:40px;height:40px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin:0 auto 0.5rem">👟</div>
+    Maurya's <span>Shoe</span></a>
+  </div>
+  <h1 class="auth-title">Welcome Back</h1>
+  <p class="auth-subtitle">Sign in to continue shopping</p>
+
+  <div class="demo-accounts">
+    <strong>🧪 Demo Accounts</strong>
+    <div class="demo-row"><span>👑 Admin: admin@mauryashoe.com / admin123</span><button class="demo-fill-btn" onclick="fillDemo('admin')">Fill</button></div>
+    <div class="demo-row"><span>👤 User: user@mauryashoe.com / user123</span><button class="demo-fill-btn" onclick="fillDemo('user')">Fill</button></div>
+  </div>
+
+  <div class="error-msg" id="error-msg"></div>
+
+  <form id="login-form">
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input type="email" id="email" class="form-input" placeholder="you@example.com" required />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" id="password" class="form-input" placeholder="••••••••" required />
+    </div>
+    <button type="submit" class="btn btn-primary" style="width:100%;margin-top:0.5rem" id="submit-btn">
+      Sign In →
+    </button>
+  </form>
+
+  <div class="auth-link">Don't have an account? <a href="/register.html">Create one</a></div>
+  <div class="auth-link" style="margin-top:0.5rem"><a href="/">← Back to Home</a></div>
+</div>
+
+<script src="js/api.js"></script><script src="js/auth.js"></script>
+<script>
+function fillDemo(role) {
+  document.getElementById('email').value = role === 'admin' ? 'admin@mauryashoe.com' : 'user@mauryashoe.com';
+  document.getElementById('password').value = role === 'admin' ? 'admin123' : 'user123';
+}
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  const err = document.getElementById('error-msg');
+  err.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  try {
+    const { token, user } = await api.login({
+      email: document.getElementById('email').value,
+      password: document.getElementById('password').value
+    });
+    Auth.save(token, user);
+    showToast('Welcome back, ' + user.name.split(' ')[0] + '! 👋', 'success');
+    setTimeout(() => {
+      const redirect = new URLSearchParams(location.search).get('redirect') || (user.role === 'admin' ? '/admin/dashboard.html' : '/');
+      location.href = redirect;
+    }, 800);
+  } catch(e) {
+    err.textContent = e.message;
+    err.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Sign In →';
+  }
+});
+if (Auth.isLoggedIn()) location.href = '/';
+</script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Manage Orders — Admin</title>
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    body{background:var(--navy-mid)}
+    .admin-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+    .admin-sidebar{background:var(--navy);border-right:1px solid rgba(245,166,35,0.1);display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:240px;z-index:100}
+    .sidebar-logo{padding:1.5rem;border-bottom:1px solid rgba(245,166,35,0.1)}
+    .sidebar-logo a{font-family:var(--font-accent);font-size:1.2rem;font-weight:800;display:flex;align-items:center;gap:0.5rem}
+    .admin-badge{font-size:0.65rem;font-weight:700;background:rgba(245,166,35,0.15);color:var(--gold);padding:0.15rem 0.4rem;border-radius:4px}
+    .sidebar-nav{padding:1rem 0;flex:1}
+    .nav-section-label{padding:0.75rem 1.25rem 0.25rem;font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted)}
+    .sidebar-link{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1.25rem;font-size:0.9rem;color:var(--text-secondary);transition:var(--transition);border-left:3px solid transparent}
+    .sidebar-link:hover,.sidebar-link.active{background:rgba(245,166,35,0.06);color:var(--gold);border-left-color:var(--gold)}
+    .sidebar-link .icon{font-size:1.1rem;width:22px}
+    .sidebar-bottom{padding:1rem 0;border-top:1px solid rgba(255,255,255,0.05)}
+    .admin-content{margin-left:240px;padding:2rem}
+    .orders-table{width:100%;border-collapse:collapse}
+    .orders-table th{padding:0.75rem 1rem;text-align:left;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);border-bottom:1px solid rgba(255,255,255,0.06)}
+    .orders-table td{padding:1rem;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;font-size:0.9rem}
+    .orders-table tr:hover td{background:rgba(255,255,255,0.02)}
+    .table-wrap{background:var(--navy);border:1px solid var(--card-border);border-radius:var(--radius-lg);overflow:auto}
+    .status-select{padding:0.35rem 0.6rem;background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:0.8rem;cursor:pointer}
+    .filter-bar{display:flex;gap:1rem;align-items:center;margin-bottom:1.5rem}
+    .filter-bar select{padding:0.6rem 1rem;background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius-md);color:var(--text-primary);font-size:0.85rem}
+    .order-detail-btn{background:none;border:none;color:var(--gold);cursor:pointer;font-size:0.85rem;font-weight:600;padding:0}
+    .order-detail-btn:hover{text-decoration:underline}
+    .detail-modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem;display:none}
+    .detail-card{background:var(--navy-light);border:1px solid var(--card-border);border-radius:var(--radius-xl);padding:2rem;width:100%;max-width:560px;max-height:85vh;overflow-y:auto;position:relative}
+    .detail-close{position:absolute;top:1rem;right:1rem;background:var(--card-bg);border:1px solid var(--card-border);border-radius:50%;width:32px;height:32px;cursor:pointer;color:var(--text-secondary);display:flex;align-items:center;justify-content:center}
+    @media(max-width:768px){.admin-sidebar{display:none}.admin-content{margin-left:0}}
+  </style>
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <div class="sidebar-logo"><a href="/"><div style="width:32px;height:32px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">👟</div>Maurya's<span class="admin-badge">ADMIN</span></a></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <a href="/admin/dashboard.html" class="sidebar-link"><span class="icon">📊</span>Dashboard</a>
+      <div class="nav-section-label">Manage</div>
+      <a href="/admin/products.html" class="sidebar-link"><span class="icon">👟</span>Products</a>
+      <a href="/admin/orders.html" class="sidebar-link active"><span class="icon">📦</span>Orders</a>
+      <div class="nav-section-label">Store</div>
+      <a href="/" class="sidebar-link"><span class="icon">🌐</span>View Store</a>
+    </nav>
+    <div class="sidebar-bottom"><div class="sidebar-link" onclick="Auth.logout()" style="color:var(--error);cursor:pointer"><span class="icon">🚪</span>Sign Out</div></div>
+  </aside>
+
+  <main class="admin-content">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem">
+      <div><h1 style="font-size:1.5rem;font-weight:800">Orders</h1><p style="color:var(--text-muted);font-size:0.85rem;margin-top:0.2rem">Manage customer orders & shipments</p></div>
+      <div id="order-counts" style="display:flex;gap:0.75rem"></div>
+    </div>
+
+    <div class="filter-bar">
+      <select id="status-filter" onchange="filterOrders()">
+        <option value="">All Orders</option>
+        <option value="pending">Pending</option>
+        <option value="processing">Processing</option>
+        <option value="shipped">Shipped</option>
+        <option value="delivered">Delivered</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      <span id="filtered-count" style="color:var(--text-muted);font-size:0.85rem"></span>
+    </div>
+
+    <div class="table-wrap">
+      <table class="orders-table">
+        <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody id="orders-tbody"><tr><td colspan="7" style="text-align:center;padding:2rem"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="detail-modal" id="order-detail-modal">
+  <div class="detail-card">
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+    <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:1.5rem" id="detail-title">Order Details</h2>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<script src="../js/api.js"></script><script src="../js/auth.js"></script>
+<script>
+if (!Auth.isLoggedIn() || !Auth.isAdmin()) location.href = '/login.html';
+
+let allOrders = [];
+const statusLabels = { pending:'⏳ Pending', processing:'🔄 Processing', shipped:'🚚 Shipped', delivered:'✅ Delivered', cancelled:'❌ Cancelled' };
+const statusFlow = ['pending','processing','shipped','delivered','cancelled'];
+
+async function loadOrders() {
+  try {
+    allOrders = await api.getAdminOrders();
+    renderCounts();
+    filterOrders();
+  } catch(e) { showToast('Failed to load: ' + e.message, 'error'); }
+}
+
+function renderCounts() {
+  const counts = {};
+  allOrders.forEach(o => { counts[o.status] = (counts[o.status]||0)+1; });
+  document.getElementById('order-counts').innerHTML = Object.entries(counts).map(([s,c]) => `<span class="status-pill status-${s}" style="font-size:0.78rem">${statusLabels[s]||s}: ${c}</span>`).join('');
+}
+
+function filterOrders() {
+  const filter = document.getElementById('status-filter').value;
+  const filtered = filter ? allOrders.filter(o => o.status === filter) : allOrders;
+  document.getElementById('filtered-count').textContent = `${filtered.length} order${filtered.length!==1?'s':''}`;
+  renderTable(filtered);
+}
+
+function renderTable(orders) {
+  document.getElementById('orders-tbody').innerHTML = orders.length ? orders.map(o => {
+    const items = Array.isArray(o.items) ? o.items : [];
+    const addr = o.shipping_address || {};
+    return `
+    <tr>
+      <td><strong>#${o.id}</strong></td>
+      <td>
+        <div style="font-weight:600;font-size:0.88rem">${o.user_name||'—'}</div>
+        <div style="font-size:0.75rem;color:var(--text-muted)">${o.user_email||''}</div>
+      </td>
+      <td>
+        <div style="display:flex;gap:0.3rem">
+          ${items.slice(0,3).map(i=>`<img src="${i.image||''}" style="width:32px;height:32px;border-radius:4px;object-fit:cover" onerror="this.src='https://via.placeholder.com/32x32/1C2333/F5A623?text=👟'" />`).join('')}
+          ${items.length>3?`<div style="width:32px;height:32px;border-radius:4px;background:var(--card-bg);display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--text-muted)">+${items.length-3}</div>`:''}
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem">${items.length} item${items.length!==1?'s':''}</div>
+      </td>
+      <td><strong style="color:var(--gold)">${formatPrice(o.total)}</strong></td>
+      <td>
+        <select class="status-select" onchange="updateStatus(${o.id},this.value)" data-current="${o.status}">
+          ${statusFlow.map(s=>`<option value="${s}" ${o.status===s?'selected':''}>${statusLabels[s]}</option>`).join('')}
+        </select>
+      </td>
+      <td style="font-size:0.8rem;color:var(--text-muted)">${new Date(o.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</td>
+      <td><button class="order-detail-btn" onclick="showDetail(${o.id})">View →</button></td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="7" style="text-align:center;padding:3rem;color:var(--text-muted)">No orders found</td></tr>';
+}
+
+async function updateStatus(id, status) {
+  try {
+    await api.updateOrderStatus(id, status);
+    const order = allOrders.find(o => o.id === id);
+    if (order) order.status = status;
+    renderCounts();
+    showToast(`Order #${id} → ${statusLabels[status]}`, 'success');
+  } catch(e) { showToast(e.message, 'error'); loadOrders(); }
+}
+
+function showDetail(id) {
+  const o = allOrders.find(x => x.id === id);
+  if (!o) return;
+  const addr = o.shipping_address || {};
+  const items = Array.isArray(o.items) ? o.items : [];
+  document.getElementById('detail-title').textContent = `Order #${o.id}`;
+  document.getElementById('detail-content').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+      <div style="padding:1rem;background:var(--card-bg);border-radius:var(--radius-md)"><div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.25rem">CUSTOMER</div><div style="font-weight:600">${o.user_name}</div><div style="font-size:0.8rem;color:var(--text-muted)">${o.user_email}</div></div>
+      <div style="padding:1rem;background:var(--card-bg);border-radius:var(--radius-md)"><div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.25rem">STATUS</div><span class="status-pill status-${o.status}">${statusLabels[o.status]}</span></div>
+    </div>
+    <div style="padding:1rem;background:var(--card-bg);border-radius:var(--radius-md);margin-bottom:1rem">
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.5rem">SHIPPING ADDRESS</div>
+      <div style="font-size:0.9rem;line-height:1.7">${addr.name||''}<br>${addr.address||''}<br>${addr.city||''}, ${addr.state||''} ${addr.pincode||''}<br>${addr.phone||''}</div>
+    </div>
+    <div style="margin-bottom:1rem">
+      <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em">Items</div>
+      ${items.map(i=>`<div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <img src="${i.image||''}" style="width:44px;height:44px;border-radius:6px;object-fit:cover" onerror="this.src='https://via.placeholder.com/44x44/1C2333/F5A623?text=👟'" />
+        <div style="flex:1"><div style="font-weight:600;font-size:0.88rem">${i.name}</div><div style="font-size:0.75rem;color:var(--text-muted)">Sz:${i.size} · ${i.color} · Qty:${i.quantity}</div></div>
+        <strong style="color:var(--gold)">${formatPrice(i.price*i.quantity)}</strong>
+      </div>`).join('')}
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:1rem">
+      <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;font-size:0.9rem;color:var(--text-secondary)"><span>Subtotal</span><span>${formatPrice(o.subtotal)}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:0.4rem;font-size:0.9rem;color:var(--text-secondary)"><span>Shipping</span><span>${o.shipping===0?'FREE':formatPrice(o.shipping)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:1.05rem;font-weight:800;color:var(--white);margin-top:0.5rem"><span>Total</span><span style="color:var(--gold)">${formatPrice(o.total)}</span></div>
+    </div>`;
+  document.getElementById('order-detail-modal').style.display = 'flex';
+}
+
+function closeDetail() { document.getElementById('order-detail-modal').style.display = 'none'; }
+document.getElementById('order-detail-modal').addEventListener('click', function(e) { if(e.target===this) closeDetail(); });
+document.addEventListener('DOMContentLoaded', loadOrders);
+</script>
+</body>
+</html>
